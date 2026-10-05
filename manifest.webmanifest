@@ -1,6 +1,6 @@
 {
-  "name": "PIWIcheck",
-  "short_name": "PIWIcheck",
+  "name": "Piwicheck",
+  "short_name": "Piwicheck",
   "description": "Interprétation des relevés de surrégime PIWIS Porsche",
   "lang": "fr",
   "start_url": "./",
