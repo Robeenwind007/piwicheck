@@ -1,5 +1,5 @@
 // Incrémenter VERSION à chaque déploiement (doit correspondre à APP_VERSION dans index.html)
-const VERSION = "1.0.2";
+const VERSION = "1.0.3";
 const CACHE = "piwicheck-v" + VERSION;
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png", "./splash.jpg"];
 
