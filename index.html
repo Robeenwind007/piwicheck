@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Surrégime PIWIS</title>
+<meta name="description" content="Interprétation des relevés de surrégime PIWIS Porsche">
+<meta name="theme-color" content="#c2410c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Surrégime">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: colonne unique type fiche d'atelier — véhicule en haut, saisie des plages en tableau, verdict + bande compte-tours */
+:root{
+  --bg:#f3f4f2; --surface:#ffffff; --fg:#1b1f1e; --muted:#5e6764; --line:#d9ddda;
+  --accent:#c2410c; --accent-soft:#fbe7dc;
+  --ok:#2f7d4f; --ok-soft:#e1f1e6; --warn:#b7791f; --warn-soft:#fbf0d9; --crit:#b42318; --crit-soft:#fbe1de;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121514; --surface:#1b1f1e; --fg:#e8ebe9; --muted:#9aa49f; --line:#2e3533;
+  --accent:#f0743a; --accent-soft:#3a2216;
+  --ok:#5cc98a; --ok-soft:#173224; --warn:#e8b04f; --warn-soft:#352a14; --crit:#f2766a; --crit-soft:#3d1a17; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121514; --surface:#1b1f1e; --fg:#e8ebe9; --muted:#9aa49f; --line:#2e3533;
+  --accent:#f0743a; --accent-soft:#3a2216;
+  --ok:#5cc98a; --ok-soft:#173224; --warn:#e8b04f; --warn-soft:#352a14; --crit:#f2766a; --crit-soft:#3d1a17; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:24px 48px}
+.wrap{max-width:980px;margin:0 auto;display:grid;gap:20px}
+header h1{font-family:var(--display);font-weight:700;font-size:clamp(30px,6vw,44px);line-height:1;letter-spacing:.01em;margin:0;text-transform:uppercase;text-wrap:balance}
+header h1 span{color:var(--accent)}
+header p{margin:8px 0 0;color:var(--muted);max-width:65ch}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:14px;min-width:0}
+.panel h2{font-family:var(--display);font-weight:600;font-size:20px;letter-spacing:.06em;text-transform:uppercase;margin:0}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+label{display:grid;gap:4px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+input,select{font:inherit;font-size:15px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%;font-variant-numeric:tabular-nums;text-transform:none;letter-spacing:0}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.calc{font-family:var(--mono);font-size:14px;color:var(--fg);background:var(--accent-soft);border-radius:6px;padding:8px 10px}
+.calc b{font-weight:500;color:var(--accent)}
+.row-btns{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;font-size:14px;font-weight:500;border-radius:6px;padding:7px 12px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+button:hover{border-color:var(--accent);color:var(--accent)}
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;min-width:760px}
+th{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+td input{padding:6px 8px;font-size:14px}
+td.num{font-family:var(--mono);font-size:14px;white-space:nowrap}
+.pl{font-family:var(--display);font-weight:700;font-size:22px;width:36px}
+.sev{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.sev.none{color:var(--muted);background:var(--bg)}
+.sev.ok{color:var(--ok);background:var(--ok-soft)}
+.sev.warn{color:var(--warn);background:var(--warn-soft)}
+.sev.crit{color:var(--crit);background:var(--crit-soft)}
+.tach{position:relative;height:46px;border-radius:6px;overflow:hidden;display:flex;border:1px solid var(--line)}
+.tach div{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:var(--mono);font-size:11px;border-right:1px solid var(--surface);min-width:0}
+.tach div:last-child{border-right:0}
+.tach strong{font-family:var(--display);font-size:16px}
+.verdict{display:grid;gap:10px;border-left:4px solid var(--muted);padding:4px 0 4px 14px}
+.verdict.ok{border-color:var(--ok)} .verdict.warn{border-color:var(--warn)} .verdict.crit{border-color:var(--crit)}
+.verdict h3{font-family:var(--display);font-size:26px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:.02em}
+.verdict ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.kpis{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.kpi{border-top:2px solid var(--line);padding-top:6px}
+.kpi span{display:block;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kpi b{font-family:var(--display);font-size:28px;font-weight:600;font-variant-numeric:tabular-nums}
+.note{font-size:13px;color:var(--muted);max-width:75ch}
+.note code{font-family:var(--mono);font-size:12.5px}
+.ex{font-size:12px;font-weight:600;color:var(--accent);letter-spacing:.06em;text-transform:uppercase}
+</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <h1>Surrégime <span>PIWIS</span></h1>
+    <p>Saisis les compteurs du test PIWIS : nombre d'allumages et heure moteur du dernier événement par plage. L'outil estime le temps passé en surrégime et le kilométrage du dernier dépassement.</p>
+  </header>
+
+  <section class="panel" aria-labelledby="h-veh">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap">
+      <h2 id="h-veh">Véhicule</h2>
+      <span class="ex" id="exTag">Exemple : 991 Carrera</span>
+    </div>
+    <div class="grid">
+      <label for="preset">Type de relevé
+        <select id="preset">
+          <option value="6">6 plages (991, 981, 997.2…)</option>
+          <option value="2">2 plages (996, 986, Cayenne, Carrera GT)</option>
+        </select>
+      </label>
+      <label for="cyl">Cylindres
+        <select id="cyl">
+          <option value="4">4 cyl.</option>
+          <option value="6" selected>6 cyl.</option>
+          <option value="8">8 cyl.</option>
+          <option value="10">10 cyl.</option>
+        </select>
+      </label>
+      <label for="km">Kilométrage actuel
+        <input id="km" type="number" inputmode="numeric" min="0" step="1">
+      </label>
+      <label for="hrs">Heures moteur actuelles
+        <input id="hrs" type="number" inputmode="decimal" min="0" step="0.1">
+      </label>
+    </div>
+    <div class="calc" id="avg"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-pl">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+      <h2 id="h-pl">Plages de surrégime</h2>
+      <div class="row-btns">
+        <button type="button" id="btnEx">Charger l'exemple</button>
+        <button type="button" id="btnClear">Vider les compteurs</button>
+      </div>
+    </div>
+    <div class="tach" id="tach" aria-hidden="true"></div>
+    <div class="tbl">
+      <table>
+        <thead><tr>
+          <th>Plage</th><th>De (tr/min)</th><th>À (tr/min)</th><th>Allumages</th><th>Dernier à (h)</th>
+          <th>Tours vilo.</th><th>Temps estimé</th><th>Km du dernier</th><th>Lecture</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-res">
+    <h2 id="h-res">Interprétation</h2>
+    <div class="kpis" id="kpis"></div>
+    <div class="verdict" id="verdict"></div>
+  </section>
+
+  <p class="note">
+    Méthode : un moteur 4 temps produit <code>cylindres ÷ 2</code> allumages par tour de vilebrequin (3 pour un 6 cylindres).
+    Temps = <code>(allumages ÷ allumages par tour) × 60 ÷ régime haut de la plage</code>.
+    Kilométrage du dernier événement = <code>heure du dernier × vitesse moyenne</code>, avec vitesse moyenne = km actuels ÷ heures moteur.
+    Ce sont des estimations : le km suppose une vitesse moyenne constante sur toute la vie du moteur, et les seuils de plages varient selon le moteur, à vérifier sur le relevé.
+  </p>
+</div>
+
+<script>
+const PRESETS = {
+  "6": [[7300,7499],[7500,7699],[7700,7899],[7900,8399],[8400,9499],[9500,9999]],
+  "2": [[7300,7699],[7700,9999]]
+};
+const EXAMPLE = {
+  preset:"6", cyl:"6", km:44990, hrs:781.2,
+  plages: PRESETS["6"].map(([a,b],i)=>({from:a,to:b,count:[38,36,1,0,0,0][i],last:[433,31,31,"","",""][i]}))
+};
+let state;
+const $ = id => document.getElementById(id);
+const fmt = (n,d=0) => Number.isFinite(n) ? n.toLocaleString("fr-FR",{minimumFractionDigits:d,maximumFractionDigits:d}) : "—";
+const num = v => { const n = parseFloat(String(v).replace(",",".")); return Number.isFinite(n) ? n : NaN; };
+
+function load(){
+  try{ const s = JSON.parse(localStorage.getItem("piwis-surregime")); if(s && s.plages) return s; }catch(e){}
+  return structuredClone(EXAMPLE);
+}
+function save(){ try{ localStorage.setItem("piwis-surregime", JSON.stringify(state)); }catch(e){} }
+
+// Gravité selon la position de la plage dans le relevé
+function level(i, n){
+  if(n === 2) return i === 0 ? "light" : "heavy";
+  if(i <= 1) return "light";
+  if(i === 2) return "mid";
+  return "heavy";
+}
+function assess(lv, count, secs){
+  if(!(count > 0)) return {cls:"none", txt:"Aucun"};
+  if(lv === "light") return {cls:"ok", txt:"Bénin"};
+  if(lv === "mid") return count <= 5 ? {cls:"ok", txt:"Anecdotique"} : {cls:"warn", txt:"À surveiller"};
+  // heavy
+  if(secs >= 1) return {cls:"crit", txt:"Critique"};
+  return count <= 3 ? {cls:"warn", txt:"À expertiser"} : {cls:"crit", txt:"Préoccupant"};
+}
+
+function render(){
+  $("preset").value = state.preset; $("cyl").value = state.cyl;
+  $("km").value = state.km; $("hrs").value = state.hrs;
+  const tb = $("rows"); tb.innerHTML = "";
+  state.plages.forEach((p,i)=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td class="pl">${i+1}</td>
+      <td><input id="from${i}" type="number" step="1" value="${p.from}" aria-label="Plage ${i+1} régime bas"></td>
+      <td><input id="to${i}" type="number" step="1" value="${p.to}" aria-label="Plage ${i+1} régime haut"></td>
+      <td><input id="count${i}" type="number" min="0" step="1" value="${p.count}" aria-label="Plage ${i+1} allumages"></td>
+      <td><input id="last${i}" type="number" min="0" step="0.1" value="${p.last}" aria-label="Plage ${i+1} heure du dernier"></td>
+      <td class="num" id="rev${i}"></td><td class="num" id="sec${i}"></td><td class="num" id="kmr${i}"></td><td id="sev${i}"></td>`;
+    tb.appendChild(tr);
+    ["from","to","count","last"].forEach(k=>{
+      tr.querySelector(`#${k}${i}`).addEventListener("input",e=>{ state.plages[i][k] = e.target.value; compute(); save(); });
+    });
+  });
+  compute();
+}
+
+function compute(){
+  const km = num(state.km), hrs = num(state.hrs), cyl = num(state.cyl);
+  const perRev = cyl/2;
+  const avg = km>0 && hrs>0 ? km/hrs : NaN;
+  $("avg").innerHTML = Number.isFinite(avg)
+    ? `Vitesse moyenne = ${fmt(km)} km ÷ ${fmt(hrs,1)} h = <b>${fmt(avg,2)} km/h</b>`
+    : `Renseigne le kilométrage et les heures moteur pour estimer le km de chaque événement.`;
+  const n = state.plages.length;
+  let totalSec = 0, heavySec = 0, heavyCount = 0, worst = "none", lastKm = NaN, lastPl = null;
+  const order = {none:0, ok:1, warn:2, crit:3};
+  const tach = $("tach"); tach.innerHTML = "";
+  state.plages.forEach((p,i)=>{
+    const count = num(p.count)||0, to = num(p.to), last = num(p.last);
+    const revs = count/perRev;
+    const secs = count>0 && to>0 ? revs*60/to : 0;
+    const kmEv = Number.isFinite(last) && Number.isFinite(avg) && count>0 ? last*avg : NaN;
+    const lv = level(i,n), a = assess(lv,count,secs);
+    totalSec += secs;
+    if(lv === "heavy"){ heavySec += secs; heavyCount += count; }
+    if(order[a.cls] > order[worst]) worst = a.cls;
+    if(Number.isFinite(kmEv) && (!Number.isFinite(lastKm) || last > lastPl.last)){ lastKm = kmEv; lastPl = {i, last}; }
+    $("rev"+i).textContent = count>0 ? fmt(revs,2) : "—";
+    $("sec"+i).textContent = count>0 ? (secs < 0.01 ? "< 0,01 s" : fmt(secs,2)+" s") : "—";
+    $("kmr"+i).textContent = Number.isFinite(kmEv) ? fmt(Math.round(kmEv))+" km" : "—";
+    $("sev"+i).innerHTML = `<span class="sev ${a.cls}">${a.txt}</span>`;
+    const seg = document.createElement("div");
+    const bg = {none:"var(--bg)", ok:"var(--ok-soft)", warn:"var(--warn-soft)", crit:"var(--crit-soft)"}[a.cls];
+    const fg = {none:"var(--muted)", ok:"var(--ok)", warn:"var(--warn)", crit:"var(--crit)"}[a.cls];
+    seg.style.background = bg; seg.style.color = fg;
+    const isLast = i === n-1;
+    seg.innerHTML = `<strong>P${i+1} · ${count}</strong><span>${isLast ? "> "+fmt(num(p.from)) : fmt(num(p.from))+"–"+fmt(to)}</span>`;
+    tach.appendChild(seg);
+  });
+
+  const totalCount = state.plages.reduce((s,p)=>s+(num(p.count)||0),0);
+  $("kpis").innerHTML = `
+    <div class="kpi"><span>Allumages en surrégime</span><b>${fmt(totalCount)}</b></div>
+    <div class="kpi"><span>Temps total estimé</span><b>${fmt(totalSec,2)} s</b></div>
+    <div class="kpi"><span>Temps en plages lourdes</span><b>${fmt(heavySec,2)} s</b></div>
+    <div class="kpi"><span>Dernier événement</span><b>${Number.isFinite(lastKm) ? "≈ "+fmt(Math.round(lastKm))+" km" : "—"}</b></div>`;
+
+  const v = $("verdict");
+  const pts = [];
+  const heavyLabel = n===2 ? "la plage 2" : "les plages 4 à 6";
+  const lightLabel = n===2 ? "la plage 1" : "les plages 1 et 2";
+  const lightCount = state.plages.reduce((s,p,i)=>s+(level(i,n)==="light"?(num(p.count)||0):0),0);
+  if(lightCount>0) pts.push(`${fmt(lightCount)} allumages dans ${lightLabel} : surrégime léger, le plus souvent un rupteur effleuré ou un rapport loupé sur boîte mécanique.`);
+  if(n===6){ const c3 = num(state.plages[2].count)||0; if(c3>0) pts.push(`${fmt(c3)} allumage${c3>1?"s":""} en plage 3 : ${c3<=5?"anecdotique":"à mettre en regard de l'historique et du type de boîte"}.`); }
+  if(heavyCount>0) pts.push(`${fmt(heavyCount)} allumages dans ${heavyLabel}, soit ≈ ${fmt(heavySec,2)} s : surrégime mécanique (rétrogradage forcé). ${heavySec>=1?"Plusieurs dixièmes à secondes : risque réel pour soupapes, bielles et coussinets. Expertise moteur conseillée (endoscopie, compression, fuite).":"Durée courte, mais à faire expertiser avant achat."}`);
+  else pts.push(`Aucun événement dans ${heavyLabel}.`);
+  if(Number.isFinite(lastKm) && lastPl){
+    const kmNow = num(state.km);
+    pts.push(`Dernier surrégime enregistré en plage ${lastPl.i+1} à ${fmt(lastPl.last,1)} h, soit ≈ ${fmt(Math.round(lastKm))} km${Number.isFinite(kmNow)?` (${fmt(Math.max(0,Math.round(kmNow-lastKm)))} km avant le relevé)`:""}.`);
+  }
+  const titles = {none:"Relevé vierge", ok:"Relevé propre", warn:"À surveiller", crit:"Moteur à expertiser"};
+  v.className = "verdict " + worst;
+  v.innerHTML = `<h3>${titles[worst]}</h3><ul>${pts.map(p=>`<li>${p}</li>`).join("")}</ul>`;
+}
+
+$("preset").addEventListener("change",e=>{
+  state.preset = e.target.value;
+  state.plages = PRESETS[state.preset].map(([a,b])=>({from:a,to:b,count:0,last:""}));
+  $("exTag").hidden = true; render(); save();
+});
+$("cyl").addEventListener("change",e=>{ state.cyl = e.target.value; compute(); save(); });
+$("km").addEventListener("input",e=>{ state.km = e.target.value; $("exTag").hidden = true; compute(); save(); });
+$("hrs").addEventListener("input",e=>{ state.hrs = e.target.value; $("exTag").hidden = true; compute(); save(); });
+$("btnEx").addEventListener("click",()=>{ state = structuredClone(EXAMPLE); $("exTag").hidden = false; render(); save(); });
+$("btnClear").addEventListener("click",()=>{ state.plages.forEach(p=>{p.count=0;p.last="";}); $("exTag").hidden = true; render(); save(); });
+
+state = load();
+$("exTag").hidden = JSON.stringify(state) !== JSON.stringify(EXAMPLE);
+render();
+</script>
+
+<script>
+if("serviceWorker" in navigator) window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+</script>
+</body>
+</html>
