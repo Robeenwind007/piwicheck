@@ -21,7 +21,7 @@
   --bg:#f3f4f2; --surface:#ffffff; --fg:#1b1f1e; --muted:#5e6764; --line:#d9ddda;
   --accent:#c2410c; --accent-soft:#fbe7dc; --on-accent:#ffffff;
   --ok:#2f7d4f; --ok-soft:#e1f1e6; --warn:#b7791f; --warn-soft:#fbf0d9; --crit:#b42318; --crit-soft:#fbe1de;
-  --splash-bg:#0c0f0e; --splash-fg:#e8ebe9; --splash-accent:#f0743a;
+  --splash-bg:#000000; --splash-fg:#e8ebe9; --splash-accent:#f0743a;
   --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
   --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
@@ -41,12 +41,13 @@
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
 
 /* ---------- Splash ---------- */
-#splash{position:fixed;inset:0;z-index:100;display:grid;place-items:center;color:var(--splash-fg);
-  background:var(--splash-bg) url("splash.jpg") center 40%/cover no-repeat;transition:opacity .5s ease,visibility .5s}
-#splash::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,transparent 30%,rgba(12,15,14,.75) 85%)}
+#splash{position:fixed;inset:0;z-index:100;display:grid;place-items:start center;color:var(--splash-fg);
+  background:var(--splash-bg) url("splash.jpg") center bottom/cover no-repeat;transition:opacity .5s ease,visibility .5s}
+@media (min-aspect-ratio: 863/1822){#splash{background-size:auto 100%}}
+#splash::before{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.7),transparent 26%)}
 #splash.out{opacity:0;visibility:hidden}
-.sp-inner{position:relative;display:grid;justify-items:center;gap:6px;padding:16px;text-align:center}
-.sp-gauge{width:min(64vw,300px);height:auto;overflow:visible}
+.sp-inner{position:relative;display:grid;justify-items:center;gap:6px;padding:calc(5vh + 16px) 16px 16px;text-align:center}
+.sp-gauge{width:min(40vw,22vh,190px);height:auto;overflow:visible}
 .sp-gauge .track{stroke:rgba(232,235,233,.18)}
 .sp-gauge .fill{stroke:var(--splash-fg);stroke-dasharray:100;stroke-dashoffset:100;animation:fill 1.5s cubic-bezier(.5,0,.2,1) .2s forwards}
 .sp-gauge .red{stroke:var(--splash-accent);stroke-dasharray:100;stroke-dashoffset:100;animation:fill .4s ease-out 1.55s forwards}
@@ -56,12 +57,12 @@ body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-
 .sp-gauge text{fill:var(--splash-fg);font-family:var(--mono);font-size:9px;opacity:.6}
 @keyframes fill{to{stroke-dashoffset:0}}
 @keyframes sweep{0%{transform:rotate(-135deg)}70%{transform:rotate(112deg)}82%{transform:rotate(96deg)}100%{transform:rotate(104deg)}}
-.sp-title{font-family:var(--display);font-weight:800;font-size:clamp(52px,14vw,96px);line-height:.9;letter-spacing:.01em;margin:-28px 0 0;
+.sp-title{font-family:var(--display);font-weight:800;font-size:clamp(46px,min(12vw,8vh),84px);line-height:.9;letter-spacing:.01em;margin:-18px 0 0;
   opacity:0;transform:translateY(10px);animation:rise .6s ease-out 1.1s forwards}
 .sp-title span{color:var(--splash-accent)}
 .sp-sub{font-size:12px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;opacity:0;animation:rise .6s ease-out 1.45s forwards}
 .sp-copy{position:absolute;bottom:calc(24px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;font-size:12px;opacity:0;letter-spacing:.08em;animation:fade .4s ease 2s forwards}
-.sp-enter{margin-top:22px;font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:.14em;text-transform:uppercase;color:var(--splash-fg);background:transparent;border:1.5px solid var(--splash-accent);border-radius:999px;padding:10px 40px;cursor:pointer;opacity:0;transform:translateY(10px);animation:rise .5s ease-out 1.9s forwards;transition:background .2s,color .2s}
+.sp-enter{position:absolute;left:50%;bottom:calc(64px + env(safe-area-inset-bottom,0px));translate:-50% 0;margin:0;background:rgba(0,0,0,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:.14em;text-transform:uppercase;color:var(--splash-fg);border:1.5px solid var(--splash-accent);border-radius:999px;padding:10px 40px;cursor:pointer;opacity:0;transform:translateY(10px);animation:rise .5s ease-out 1.9s forwards;transition:background .2s,color .2s}
 .sp-enter:hover,.sp-enter:focus-visible{background:var(--splash-accent);color:var(--splash-bg);outline:none}
 @keyframes rise{to{opacity:1;transform:none}}
 @keyframes fade{to{opacity:.55}}
@@ -181,8 +182,8 @@ td.num{font-family:var(--mono);font-size:14px;white-space:nowrap}
     </svg>
     <h1 class="sp-title">PIWI<span>check</span></h1>
     <div class="sp-sub">Interprétation test PIWI</div>
-    <button type="button" class="sp-enter" id="spEnter">Entrer</button>
   </div>
+  <button type="button" class="sp-enter" id="spEnter">Entrer</button>
   <div class="sp-copy">© Olivier BERNARD 2026 · <span id="appVer"></span></div>
 </div>
 
@@ -283,7 +284,7 @@ td.num{font-family:var(--mono);font-size:14px;white-space:nowrap}
 </main>
 
 <script>
-const APP_VERSION = "1.0.3";
+const APP_VERSION = "1.1.0";
 const PRESETS = {
   "6": [[7300,7499],[7500,7699],[7700,7899],[7900,8399],[8400,9499],[9500,9999]],
   "2": [[7300,7699],[7700,9999]]
