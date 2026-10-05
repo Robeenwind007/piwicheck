@@ -1,4 +1,4 @@
-# Surrégime PIWIS
+# PIWIcheck
 
 PWA autonome d'interprétation des relevés de surrégime PIWIS Porsche : temps estimé par plage, kilométrage du dernier événement, verdict.
 

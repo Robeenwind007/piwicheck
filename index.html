@@ -3,54 +3,105 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Surrégime PIWIS</title>
+<title>PIWIcheck</title>
 <meta name="description" content="Interprétation des relevés de surrégime PIWIS Porsche">
-<meta name="theme-color" content="#c2410c">
+<meta name="theme-color" content="#0c0f0e">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Surrégime">
-
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PIWIcheck">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: colonne unique type fiche d'atelier — véhicule en haut, saisie des plages en tableau, verdict + bande compte-tours */
+/* Layout: en-tête collant avec onglets Saisie / Lecture, une colonne de panneaux type fiche d'atelier ; splash plein écran au lancement */
 :root{
   --bg:#f3f4f2; --surface:#ffffff; --fg:#1b1f1e; --muted:#5e6764; --line:#d9ddda;
-  --accent:#c2410c; --accent-soft:#fbe7dc;
+  --accent:#c2410c; --accent-soft:#fbe7dc; --on-accent:#ffffff;
   --ok:#2f7d4f; --ok-soft:#e1f1e6; --warn:#b7791f; --warn-soft:#fbf0d9; --crit:#b42318; --crit-soft:#fbe1de;
+  --splash-bg:#0c0f0e; --splash-fg:#e8ebe9; --splash-accent:#f0743a;
   --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
   --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#121514; --surface:#1b1f1e; --fg:#e8ebe9; --muted:#9aa49f; --line:#2e3533;
-  --accent:#f0743a; --accent-soft:#3a2216;
+  --accent:#f0743a; --accent-soft:#3a2216; --on-accent:#140b06;
   --ok:#5cc98a; --ok-soft:#173224; --warn:#e8b04f; --warn-soft:#352a14; --crit:#f2766a; --crit-soft:#3d1a17; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#121514; --surface:#1b1f1e; --fg:#e8ebe9; --muted:#9aa49f; --line:#2e3533;
-  --accent:#f0743a; --accent-soft:#3a2216;
+  --accent:#f0743a; --accent-soft:#3a2216; --on-accent:#140b06;
   --ok:#5cc98a; --ok-soft:#173224; --warn:#e8b04f; --warn-soft:#352a14; --crit:#f2766a; --crit-soft:#3d1a17; color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:24px 48px}
-.wrap{max-width:980px;margin:0 auto;display:grid;gap:20px}
-header h1{font-family:var(--display);font-weight:700;font-size:clamp(30px,6vw,44px);line-height:1;letter-spacing:.01em;margin:0;text-transform:uppercase;text-wrap:balance}
-header h1 span{color:var(--accent)}
-header p{margin:8px 0 0;color:var(--muted);max-width:65ch}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+
+/* ---------- Splash ---------- */
+#splash{position:fixed;inset:0;z-index:100;display:grid;place-items:center;color:var(--splash-fg);
+  background:var(--splash-bg) url("splash.jpg") center 40%/cover no-repeat;transition:opacity .5s ease,visibility .5s;cursor:pointer}
+#splash::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,transparent 30%,rgba(12,15,14,.75) 85%)}
+#splash.out{opacity:0;visibility:hidden}
+.sp-inner{position:relative;display:grid;justify-items:center;gap:6px;padding:16px;text-align:center}
+.sp-gauge{width:min(64vw,300px);height:auto;overflow:visible}
+.sp-gauge .track{stroke:rgba(232,235,233,.18)}
+.sp-gauge .fill{stroke:var(--splash-fg);stroke-dasharray:100;stroke-dashoffset:100;animation:fill 1.5s cubic-bezier(.5,0,.2,1) .2s forwards}
+.sp-gauge .red{stroke:var(--splash-accent);stroke-dasharray:100;stroke-dashoffset:100;animation:fill .4s ease-out 1.55s forwards}
+.sp-gauge .needle{transform-origin:100px 100px;transform:rotate(-135deg);animation:sweep 1.9s cubic-bezier(.45,0,.15,1) .2s forwards}
+.sp-gauge .needle line{stroke:var(--splash-accent)}
+.sp-gauge .hub{fill:var(--splash-fg)}
+.sp-gauge text{fill:var(--splash-fg);font-family:var(--mono);font-size:9px;opacity:.6}
+@keyframes fill{to{stroke-dashoffset:0}}
+@keyframes sweep{0%{transform:rotate(-135deg)}70%{transform:rotate(112deg)}82%{transform:rotate(96deg)}100%{transform:rotate(104deg)}}
+.sp-title{font-family:var(--display);font-weight:800;font-size:clamp(52px,14vw,96px);line-height:.9;letter-spacing:.01em;margin:-28px 0 0;
+  opacity:0;transform:translateY(10px);animation:rise .6s ease-out 1.1s forwards}
+.sp-title span{color:var(--splash-accent)}
+.sp-sub{font-size:12px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;opacity:0;animation:rise .6s ease-out 1.45s forwards}
+.sp-tap{position:absolute;bottom:calc(28px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;font-size:12px;opacity:0;letter-spacing:.08em;animation:fade .4s ease 2.2s forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+@keyframes fade{to{opacity:.55}}
+.shake{animation:shake .12s linear 1.62s 4}
+@keyframes shake{50%{transform:translate(1px,-1px)}}
+@media (prefers-reduced-motion: reduce){
+  .sp-gauge .fill,.sp-gauge .red{animation:none;stroke-dashoffset:0}
+  .sp-gauge .needle{animation:none;transform:rotate(104deg)}
+  .sp-title,.sp-sub{animation:none;opacity:1;transform:none}
+  .shake{animation:none}
+}
+
+/* ---------- App shell ---------- */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);border-bottom:1px solid var(--line);padding-inline:16px}
+.top-in{max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-block:10px}
+.brand{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:.01em;line-height:1}
+.brand span{color:var(--accent)}
+.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:3px}
+.tab{font:inherit;font-family:var(--display);font-weight:600;font-size:17px;letter-spacing:.06em;text-transform:uppercase;border:0;border-radius:6px;padding:5px 16px;background:transparent;color:var(--muted);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--on-accent)}
+main{padding-inline:16px;padding-block:20px 48px}
+.wrap{max-width:980px;margin:0 auto;display:grid;gap:18px}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:14px;min-width:0}
 .panel h2{font-family:var(--display);font-weight:600;font-size:20px;letter-spacing:.06em;text-transform:uppercase;margin:0}
+.ph{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
 label{display:grid;gap:4px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 input,select{font:inherit;font-size:15px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%;font-variant-numeric:tabular-nums;text-transform:none;letter-spacing:0}
+input#immat{font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em}
 input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-.calc{font-family:var(--mono);font-size:14px;color:var(--fg);background:var(--accent-soft);border-radius:6px;padding:8px 10px}
+.calc{font-family:var(--mono);font-size:14px;background:var(--accent-soft);border-radius:6px;padding:8px 10px}
 .calc b{font-weight:500;color:var(--accent)}
-.row-btns{display:flex;gap:8px;flex-wrap:wrap}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
 button{font:inherit;font-size:14px;font-weight:500;border-radius:6px;padding:7px 12px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
 button:hover{border-color:var(--accent);color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+button.primary:hover{filter:brightness(1.08);color:var(--on-accent)}
+button.danger{color:var(--crit)} button.danger:hover{border-color:var(--crit)}
+.cta{display:flex;justify-content:flex-end}
+.cta button{font-family:var(--display);font-size:18px;letter-spacing:.05em;text-transform:uppercase;padding:10px 20px}
 .tbl{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;min-width:760px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+#tIn{min-width:520px} #tOut{min-width:640px}
 th{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
 td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
 td input{padding:6px 8px;font-size:14px}
@@ -61,96 +112,165 @@ td.num{font-family:var(--mono);font-size:14px;white-space:nowrap}
 .sev.ok{color:var(--ok);background:var(--ok-soft)}
 .sev.warn{color:var(--warn);background:var(--warn-soft)}
 .sev.crit{color:var(--crit);background:var(--crit-soft)}
-.tach{position:relative;height:46px;border-radius:6px;overflow:hidden;display:flex;border:1px solid var(--line)}
-.tach div{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:var(--mono);font-size:11px;border-right:1px solid var(--surface);min-width:0}
+.tach{display:flex;height:46px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.tach div{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:var(--mono);font-size:11px;border-right:1px solid var(--surface);min-width:0;text-align:center}
 .tach div:last-child{border-right:0}
 .tach strong{font-family:var(--display);font-size:16px}
 .verdict{display:grid;gap:10px;border-left:4px solid var(--muted);padding:4px 0 4px 14px}
 .verdict.ok{border-color:var(--ok)} .verdict.warn{border-color:var(--warn)} .verdict.crit{border-color:var(--crit)}
-.verdict h3{font-family:var(--display);font-size:26px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:.02em}
-.verdict ul{margin:0;padding-left:18px;display:grid;gap:4px}
-.kpis{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.verdict h3{font-family:var(--display);font-size:28px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:.02em}
+.verdict ul{margin:0;padding-left:18px;display:grid;gap:4px;max-width:75ch}
+.vehline{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;color:var(--muted)}
+.vehline b{color:var(--fg);font-weight:600}
+.plate{font-family:var(--mono);font-weight:500;color:var(--fg);border:1.5px solid var(--fg);border-radius:4px;padding:0 6px;letter-spacing:.06em}
+.kpis{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
 .kpi{border-top:2px solid var(--line);padding-top:6px}
 .kpi span{display:block;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .kpi b{font-family:var(--display);font-size:28px;font-weight:600;font-variant-numeric:tabular-nums}
+.msg{font-size:14px;min-height:1.5em;color:var(--ok)}
+.msg.err{color:var(--crit)}
+.list{display:grid;gap:8px}
+.rec{display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:8px}
+.rec.cur{border-color:var(--accent)}
+.rec .dot{width:10px;height:10px;border-radius:50%;background:var(--muted)}
+.rec .dot.ok{background:var(--ok)} .rec .dot.warn{background:var(--warn)} .rec .dot.crit{background:var(--crit)}
+.rec .meta{min-width:0}
+.rec .meta b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rec .meta small{color:var(--muted);font-size:12.5px}
+.rec .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.rec .acts button{padding:5px 10px;font-size:13px}
+.empty{color:var(--muted);font-size:14px}
 .note{font-size:13px;color:var(--muted);max-width:75ch}
 .note code{font-family:var(--mono);font-size:12.5px}
 .ex{font-size:12px;font-weight:600;color:var(--accent);letter-spacing:.06em;text-transform:uppercase}
+@media (max-width:520px){ .rec{grid-template-columns:auto 1fr} .rec .acts{grid-column:1/-1;justify-content:flex-start} }
 </style>
-<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
 
-
-<div class="wrap">
-  <header>
-    <h1>Surrégime <span>PIWIS</span></h1>
-    <p>Saisis les compteurs du test PIWIS : nombre d'allumages et heure moteur du dernier événement par plage. L'outil estime le temps passé en surrégime et le kilométrage du dernier dépassement.</p>
-  </header>
-
-  <section class="panel" aria-labelledby="h-veh">
-    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap">
-      <h2 id="h-veh">Véhicule</h2>
-      <span class="ex" id="exTag">Exemple : 991 Carrera</span>
-    </div>
-    <div class="grid">
-      <label for="preset">Type de relevé
-        <select id="preset">
-          <option value="6">6 plages (991, 981, 997.2…)</option>
-          <option value="2">2 plages (996, 986, Cayenne, Carrera GT)</option>
-        </select>
-      </label>
-      <label for="cyl">Cylindres
-        <select id="cyl">
-          <option value="4">4 cyl.</option>
-          <option value="6" selected>6 cyl.</option>
-          <option value="8">8 cyl.</option>
-          <option value="10">10 cyl.</option>
-        </select>
-      </label>
-      <label for="km">Kilométrage actuel
-        <input id="km" type="number" inputmode="numeric" min="0" step="1">
-      </label>
-      <label for="hrs">Heures moteur actuelles
-        <input id="hrs" type="number" inputmode="decimal" min="0" step="0.1">
-      </label>
-    </div>
-    <div class="calc" id="avg"></div>
-  </section>
-
-  <section class="panel" aria-labelledby="h-pl">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-      <h2 id="h-pl">Plages de surrégime</h2>
-      <div class="row-btns">
-        <button type="button" id="btnEx">Charger l'exemple</button>
-        <button type="button" id="btnClear">Vider les compteurs</button>
-      </div>
-    </div>
-    <div class="tach" id="tach" aria-hidden="true"></div>
-    <div class="tbl">
-      <table>
-        <thead><tr>
-          <th>Plage</th><th>De (tr/min)</th><th>À (tr/min)</th><th>Allumages</th><th>Dernier à (h)</th>
-          <th>Tours vilo.</th><th>Temps estimé</th><th>Km du dernier</th><th>Lecture</th>
-        </tr></thead>
-        <tbody id="rows"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <section class="panel" aria-labelledby="h-res">
-    <h2 id="h-res">Interprétation</h2>
-    <div class="kpis" id="kpis"></div>
-    <div class="verdict" id="verdict"></div>
-  </section>
-
-  <p class="note">
-    Méthode : un moteur 4 temps produit <code>cylindres ÷ 2</code> allumages par tour de vilebrequin (3 pour un 6 cylindres).
-    Temps = <code>(allumages ÷ allumages par tour) × 60 ÷ régime haut de la plage</code>.
-    Kilométrage du dernier événement = <code>heure du dernier × vitesse moyenne</code>, avec vitesse moyenne = km actuels ÷ heures moteur.
-    Ce sont des estimations : le km suppose une vitesse moyenne constante sur toute la vie du moteur, et les seuils de plages varient selon le moteur, à vérifier sur le relevé.
-  </p>
+<div id="splash" role="presentation" aria-hidden="true">
+  <div class="sp-inner">
+    <svg class="sp-gauge shake" viewBox="0 0 200 200" fill="none">
+      <path class="track" d="M43.4 156.6 A80 80 0 1 1 156.6 156.6" stroke-width="6" stroke-linecap="round"/>
+      <path class="fill" pathLength="100" d="M43.4 156.6 A80 80 0 1 1 186.6 100" stroke-width="6" stroke-linecap="round"/>
+      <path class="red" pathLength="100" d="M180 100 A80 80 0 0 1 156.6 156.6" stroke-width="6" stroke-linecap="round"/>
+      <text x="38" y="178">0</text><text x="100" y="40" text-anchor="middle">5</text><text x="160" y="178" text-anchor="end">9</text>
+      <g class="needle"><line x1="100" y1="100" x2="100" y2="32" stroke-width="3" stroke-linecap="round"/></g>
+      <circle class="hub" cx="100" cy="100" r="7"/>
+    </svg>
+    <h1 class="sp-title">PIWI<span>check</span></h1>
+    <div class="sp-sub">Lecture des surrégimes</div>
+  </div>
+  <div class="sp-tap">Touchez pour entrer</div>
 </div>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand">PIWI<span>check</span></div>
+    <div class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" id="tab-in" aria-controls="view-in" aria-selected="true">Saisie</button>
+      <button class="tab" role="tab" id="tab-out" aria-controls="view-out" aria-selected="false">Lecture</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- ========== ONGLET SAISIE ========== -->
+  <div class="wrap" id="view-in" role="tabpanel" aria-labelledby="tab-in">
+    <section class="panel" aria-labelledby="h-veh">
+      <div class="ph">
+        <h2 id="h-veh">Véhicule</h2>
+        <span class="ex" id="exTag">Exemple : 991 Carrera</span>
+      </div>
+      <div class="grid">
+        <label for="preset">Type de relevé
+          <select id="preset">
+            <option value="6">6 plages (991, 981, 997.2…)</option>
+            <option value="2">2 plages (996, 986, Cayenne, Carrera GT)</option>
+          </select>
+        </label>
+        <label for="cyl">Cylindres
+          <select id="cyl">
+            <option value="4">4 cyl.</option>
+            <option value="6">6 cyl.</option>
+            <option value="8">8 cyl.</option>
+            <option value="10">10 cyl.</option>
+          </select>
+        </label>
+        <label for="km">Kilométrage actuel
+          <input id="km" type="number" inputmode="numeric" min="0" step="1">
+        </label>
+        <label for="hrs">Heures moteur actuelles
+          <input id="hrs" type="number" inputmode="decimal" min="0" step="0.1">
+        </label>
+      </div>
+      <div class="calc" id="avg"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-pl">
+      <div class="ph">
+        <h2 id="h-pl">Plages de surrégime</h2>
+        <div class="btns">
+          <button type="button" id="btnEx">Charger l'exemple</button>
+          <button type="button" id="btnNew">Nouveau relevé</button>
+        </div>
+      </div>
+      <div class="tbl">
+        <table id="tIn">
+          <thead><tr><th>Plage</th><th>De (tr/min)</th><th>À (tr/min)</th><th>Allumages</th><th>Dernier à (h)</th></tr></thead>
+          <tbody id="rowsIn"></tbody>
+        </table>
+      </div>
+      <div class="cta"><button type="button" class="primary" id="goOut">Voir l'interprétation →</button></div>
+    </section>
+
+    <p class="note">
+      Méthode : un moteur 4 temps produit <code>cylindres ÷ 2</code> allumages par tour de vilebrequin (3 pour un 6 cylindres).
+      Temps = <code>(allumages ÷ allumages par tour) × 60 ÷ régime haut de la plage</code>.
+      Km du dernier événement = <code>heure du dernier × vitesse moyenne</code>, avec vitesse moyenne = km actuels ÷ heures moteur.
+      Ce sont des estimations ; les seuils de plages varient selon le moteur, à vérifier sur le relevé.
+    </p>
+  </div>
+
+  <!-- ========== ONGLET LECTURE ========== -->
+  <div class="wrap" id="view-out" role="tabpanel" aria-labelledby="tab-out" hidden>
+    <section class="panel" aria-labelledby="h-res">
+      <div class="ph"><h2 id="h-res">Interprétation</h2></div>
+      <div class="vehline" id="vehline"></div>
+      <div class="verdict" id="verdict"></div>
+      <div class="kpis" id="kpis"></div>
+      <div class="tach" id="tach" aria-hidden="true"></div>
+      <div class="tbl">
+        <table id="tOut">
+          <thead><tr><th>Plage</th><th>Régime</th><th>Allumages</th><th>Tours vilo.</th><th>Temps estimé</th><th>Km du dernier</th><th>Lecture</th></tr></thead>
+          <tbody id="rowsOut"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-save">
+      <h2 id="h-save">Enregistrer ce relevé</h2>
+      <form id="saveForm" class="grid" novalidate>
+        <label for="label">Libellé
+          <input id="label" type="text" maxlength="80" placeholder="991 Carrera S — achat Nantes" autocomplete="off">
+        </label>
+        <label for="immat">Immatriculation
+          <input id="immat" type="text" maxlength="12" placeholder="AB-123-CD" autocomplete="off">
+        </label>
+      </form>
+      <div class="btns">
+        <button type="button" class="primary" id="btnSave">Enregistrer</button>
+        <button type="button" id="btnSaveNew" hidden>Enregistrer comme nouveau</button>
+      </div>
+      <div class="msg" id="saveMsg" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-list">
+      <div class="ph"><h2 id="h-list">Relevés enregistrés</h2><span class="ex" id="count"></span></div>
+      <div class="list" id="list"></div>
+    </section>
+  </div>
+</main>
 
 <script>
 const PRESETS = {
@@ -158,21 +278,26 @@ const PRESETS = {
   "2": [[7300,7699],[7700,9999]]
 };
 const EXAMPLE = {
-  preset:"6", cyl:"6", km:44990, hrs:781.2,
+  id:null, label:"", immat:"", preset:"6", cyl:"6", km:44990, hrs:781.2,
   plages: PRESETS["6"].map(([a,b],i)=>({from:a,to:b,count:[38,36,1,0,0,0][i],last:[433,31,31,"","",""][i]}))
 };
-let state;
+const K_DRAFT = "piwicheck-brouillon", K_LIST = "piwicheck-releves";
 const $ = id => document.getElementById(id);
 const fmt = (n,d=0) => Number.isFinite(n) ? n.toLocaleString("fr-FR",{minimumFractionDigits:d,maximumFractionDigits:d}) : "—";
-const num = v => { const n = parseFloat(String(v).replace(",",".")); return Number.isFinite(n) ? n : NaN; };
+const num = v => { const n = parseFloat(String(v ?? "").replace(",",".")); return Number.isFinite(n) ? n : NaN; };
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const clone = o => JSON.parse(JSON.stringify(o));
+const isExample = s => JSON.stringify({...s,id:null,label:"",immat:""}) === JSON.stringify(EXAMPLE);
 
-function load(){
-  try{ const s = JSON.parse(localStorage.getItem("piwis-surregime")); if(s && s.plages) return s; }catch(e){}
-  return structuredClone(EXAMPLE);
-}
-function save(){ try{ localStorage.setItem("piwis-surregime", JSON.stringify(state)); }catch(e){} }
+function readLS(k, fb){ try{ const v = JSON.parse(localStorage.getItem(k)); return v ?? fb; }catch(e){ return fb; } }
+function writeLS(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } }
 
-// Gravité selon la position de la plage dans le relevé
+let state = readLS(K_DRAFT, null);
+if(!state || !Array.isArray(state.plages)) state = clone(EXAMPLE);
+let records = readLS(K_LIST, []);
+if(!Array.isArray(records)) records = [];
+
+/* ---------- Analyse ---------- */
 function level(i, n){
   if(n === 2) return i === 0 ? "light" : "heavy";
   if(i <= 1) return "light";
@@ -183,107 +308,228 @@ function assess(lv, count, secs){
   if(!(count > 0)) return {cls:"none", txt:"Aucun"};
   if(lv === "light") return {cls:"ok", txt:"Bénin"};
   if(lv === "mid") return count <= 5 ? {cls:"ok", txt:"Anecdotique"} : {cls:"warn", txt:"À surveiller"};
-  // heavy
   if(secs >= 1) return {cls:"crit", txt:"Critique"};
   return count <= 3 ? {cls:"warn", txt:"À expertiser"} : {cls:"crit", txt:"Préoccupant"};
 }
+const TITLES = {none:"Relevé vierge", ok:"Relevé propre", warn:"À surveiller", crit:"Moteur à expertiser"};
 
-function render(){
-  $("preset").value = state.preset; $("cyl").value = state.cyl;
-  $("km").value = state.km; $("hrs").value = state.hrs;
-  const tb = $("rows"); tb.innerHTML = "";
-  state.plages.forEach((p,i)=>{
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td class="pl">${i+1}</td>
-      <td><input id="from${i}" type="number" step="1" value="${p.from}" aria-label="Plage ${i+1} régime bas"></td>
-      <td><input id="to${i}" type="number" step="1" value="${p.to}" aria-label="Plage ${i+1} régime haut"></td>
-      <td><input id="count${i}" type="number" min="0" step="1" value="${p.count}" aria-label="Plage ${i+1} allumages"></td>
-      <td><input id="last${i}" type="number" min="0" step="0.1" value="${p.last}" aria-label="Plage ${i+1} heure du dernier"></td>
-      <td class="num" id="rev${i}"></td><td class="num" id="sec${i}"></td><td class="num" id="kmr${i}"></td><td id="sev${i}"></td>`;
-    tb.appendChild(tr);
-    ["from","to","count","last"].forEach(k=>{
-      tr.querySelector(`#${k}${i}`).addEventListener("input",e=>{ state.plages[i][k] = e.target.value; compute(); save(); });
-    });
-  });
-  compute();
-}
-
-function compute(){
-  const km = num(state.km), hrs = num(state.hrs), cyl = num(state.cyl);
-  const perRev = cyl/2;
+function analyze(s){
+  const km = num(s.km), hrs = num(s.hrs), perRev = num(s.cyl)/2;
   const avg = km>0 && hrs>0 ? km/hrs : NaN;
-  $("avg").innerHTML = Number.isFinite(avg)
-    ? `Vitesse moyenne = ${fmt(km)} km ÷ ${fmt(hrs,1)} h = <b>${fmt(avg,2)} km/h</b>`
-    : `Renseigne le kilométrage et les heures moteur pour estimer le km de chaque événement.`;
-  const n = state.plages.length;
-  let totalSec = 0, heavySec = 0, heavyCount = 0, worst = "none", lastKm = NaN, lastPl = null;
-  const order = {none:0, ok:1, warn:2, crit:3};
-  const tach = $("tach"); tach.innerHTML = "";
-  state.plages.forEach((p,i)=>{
-    const count = num(p.count)||0, to = num(p.to), last = num(p.last);
+  const n = s.plages.length, rank = {none:0, ok:1, warn:2, crit:3};
+  let totalSec=0, heavySec=0, heavyCount=0, lightCount=0, totalCount=0, worst="none", lastEv=null;
+  const rows = s.plages.map((p,i)=>{
+    const count = num(p.count)||0, from = num(p.from), to = num(p.to), last = num(p.last);
     const revs = count/perRev;
     const secs = count>0 && to>0 ? revs*60/to : 0;
-    const kmEv = Number.isFinite(last) && Number.isFinite(avg) && count>0 ? last*avg : NaN;
+    const kmEv = count>0 && Number.isFinite(last) && Number.isFinite(avg) ? last*avg : NaN;
     const lv = level(i,n), a = assess(lv,count,secs);
-    totalSec += secs;
-    if(lv === "heavy"){ heavySec += secs; heavyCount += count; }
-    if(order[a.cls] > order[worst]) worst = a.cls;
-    if(Number.isFinite(kmEv) && (!Number.isFinite(lastKm) || last > lastPl.last)){ lastKm = kmEv; lastPl = {i, last}; }
-    $("rev"+i).textContent = count>0 ? fmt(revs,2) : "—";
-    $("sec"+i).textContent = count>0 ? (secs < 0.01 ? "< 0,01 s" : fmt(secs,2)+" s") : "—";
-    $("kmr"+i).textContent = Number.isFinite(kmEv) ? fmt(Math.round(kmEv))+" km" : "—";
-    $("sev"+i).innerHTML = `<span class="sev ${a.cls}">${a.txt}</span>`;
-    const seg = document.createElement("div");
-    const bg = {none:"var(--bg)", ok:"var(--ok-soft)", warn:"var(--warn-soft)", crit:"var(--crit-soft)"}[a.cls];
-    const fg = {none:"var(--muted)", ok:"var(--ok)", warn:"var(--warn)", crit:"var(--crit)"}[a.cls];
-    seg.style.background = bg; seg.style.color = fg;
-    const isLast = i === n-1;
-    seg.innerHTML = `<strong>P${i+1} · ${count}</strong><span>${isLast ? "> "+fmt(num(p.from)) : fmt(num(p.from))+"–"+fmt(to)}</span>`;
-    tach.appendChild(seg);
+    totalSec += secs; totalCount += count;
+    if(lv==="heavy"){ heavySec += secs; heavyCount += count; }
+    if(lv==="light") lightCount += count;
+    if(rank[a.cls] > rank[worst]) worst = a.cls;
+    if(count>0 && Number.isFinite(last) && (!lastEv || last > lastEv.last)) lastEv = {i, last, km:kmEv};
+    return {i, from, to, count, revs, secs, kmEv, a, isLast: i===n-1};
   });
-
-  const totalCount = state.plages.reduce((s,p)=>s+(num(p.count)||0),0);
-  $("kpis").innerHTML = `
-    <div class="kpi"><span>Allumages en surrégime</span><b>${fmt(totalCount)}</b></div>
-    <div class="kpi"><span>Temps total estimé</span><b>${fmt(totalSec,2)} s</b></div>
-    <div class="kpi"><span>Temps en plages lourdes</span><b>${fmt(heavySec,2)} s</b></div>
-    <div class="kpi"><span>Dernier événement</span><b>${Number.isFinite(lastKm) ? "≈ "+fmt(Math.round(lastKm))+" km" : "—"}</b></div>`;
-
-  const v = $("verdict");
   const pts = [];
   const heavyLabel = n===2 ? "la plage 2" : "les plages 4 à 6";
   const lightLabel = n===2 ? "la plage 1" : "les plages 1 et 2";
-  const lightCount = state.plages.reduce((s,p,i)=>s+(level(i,n)==="light"?(num(p.count)||0):0),0);
   if(lightCount>0) pts.push(`${fmt(lightCount)} allumages dans ${lightLabel} : surrégime léger, le plus souvent un rupteur effleuré ou un rapport loupé sur boîte mécanique.`);
-  if(n===6){ const c3 = num(state.plages[2].count)||0; if(c3>0) pts.push(`${fmt(c3)} allumage${c3>1?"s":""} en plage 3 : ${c3<=5?"anecdotique":"à mettre en regard de l'historique et du type de boîte"}.`); }
+  if(n===6){ const c3 = num(s.plages[2].count)||0; if(c3>0) pts.push(`${fmt(c3)} allumage${c3>1?"s":""} en plage 3 : ${c3<=5?"anecdotique":"à mettre en regard de l'historique et du type de boîte"}.`); }
   if(heavyCount>0) pts.push(`${fmt(heavyCount)} allumages dans ${heavyLabel}, soit ≈ ${fmt(heavySec,2)} s : surrégime mécanique (rétrogradage forcé). ${heavySec>=1?"Plusieurs dixièmes à secondes : risque réel pour soupapes, bielles et coussinets. Expertise moteur conseillée (endoscopie, compression, fuite).":"Durée courte, mais à faire expertiser avant achat."}`);
   else pts.push(`Aucun événement dans ${heavyLabel}.`);
-  if(Number.isFinite(lastKm) && lastPl){
-    const kmNow = num(state.km);
-    pts.push(`Dernier surrégime enregistré en plage ${lastPl.i+1} à ${fmt(lastPl.last,1)} h, soit ≈ ${fmt(Math.round(lastKm))} km${Number.isFinite(kmNow)?` (${fmt(Math.max(0,Math.round(kmNow-lastKm)))} km avant le relevé)`:""}.`);
+  if(lastEv){
+    pts.push(Number.isFinite(lastEv.km)
+      ? `Dernier surrégime enregistré en plage ${lastEv.i+1} à ${fmt(lastEv.last,1)} h, soit ≈ ${fmt(Math.round(lastEv.km))} km${Number.isFinite(km)?` (${fmt(Math.max(0,Math.round(km-lastEv.km)))} km avant le relevé)`:""}.`
+      : `Dernier surrégime enregistré en plage ${lastEv.i+1} à ${fmt(lastEv.last,1)} h. Renseigne km et heures moteur pour estimer le kilométrage.`);
   }
-  const titles = {none:"Relevé vierge", ok:"Relevé propre", warn:"À surveiller", crit:"Moteur à expertiser"};
-  v.className = "verdict " + worst;
-  v.innerHTML = `<h3>${titles[worst]}</h3><ul>${pts.map(p=>`<li>${p}</li>`).join("")}</ul>`;
+  return {km, hrs, avg, rows, totalSec, heavySec, totalCount, worst, title:TITLES[worst], pts, lastEv};
 }
 
+/* ---------- Saisie ---------- */
+function renderInputs(){
+  $("preset").value = state.preset; $("cyl").value = state.cyl;
+  $("km").value = state.km; $("hrs").value = state.hrs;
+  $("exTag").hidden = !isExample(state);
+  const tb = $("rowsIn"); tb.innerHTML = "";
+  state.plages.forEach((p,i)=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td class="pl">${i+1}</td>
+      <td><input id="from${i}" type="number" step="1" value="${esc(p.from)}" aria-label="Plage ${i+1} régime bas"></td>
+      <td><input id="to${i}" type="number" step="1" value="${esc(p.to)}" aria-label="Plage ${i+1} régime haut"></td>
+      <td><input id="count${i}" type="number" inputmode="numeric" min="0" step="1" value="${esc(p.count)}" aria-label="Plage ${i+1} allumages"></td>
+      <td><input id="last${i}" type="number" inputmode="decimal" min="0" step="0.1" value="${esc(p.last)}" aria-label="Plage ${i+1} heure du dernier"></td>`;
+    tb.appendChild(tr);
+    ["from","to","count","last"].forEach(k=>{
+      tr.querySelector(`#${k}${i}`).addEventListener("input",e=>{ state.plages[i][k] = e.target.value; changed(); });
+    });
+  });
+  renderAvg();
+}
+function renderAvg(){
+  const km = num(state.km), hrs = num(state.hrs);
+  $("avg").innerHTML = km>0 && hrs>0
+    ? `Vitesse moyenne = ${fmt(km)} km ÷ ${fmt(hrs,1)} h = <b>${fmt(km/hrs,2)} km/h</b>`
+    : `Renseigne le kilométrage et les heures moteur pour estimer le km de chaque événement.`;
+}
+function changed(){ $("exTag").hidden = !isExample(state); renderAvg(); writeLS(K_DRAFT, state); }
+
+/* ---------- Lecture ---------- */
+function renderOutput(){
+  const r = analyze(state);
+  const veh = [];
+  if(state.label) veh.push(`<b>${esc(state.label)}</b>`);
+  if(state.immat) veh.push(`<span class="plate">${esc(state.immat)}</span>`);
+  veh.push(`${fmt(r.km)} km`, `${fmt(r.hrs,1)} h moteur`);
+  if(Number.isFinite(r.avg)) veh.push(`${fmt(r.avg,2)} km/h moy.`);
+  veh.push(`${state.cyl} cyl. · ${state.plages.length} plages`);
+  $("vehline").innerHTML = veh.map(v=>`<span>${v}</span>`).join("");
+
+  $("verdict").className = "verdict " + r.worst;
+  $("verdict").innerHTML = `<h3>${r.title}</h3><ul>${r.pts.map(p=>`<li>${p}</li>`).join("")}</ul>`;
+
+  $("kpis").innerHTML = `
+    <div class="kpi"><span>Allumages en surrégime</span><b>${fmt(r.totalCount)}</b></div>
+    <div class="kpi"><span>Temps total estimé</span><b>${fmt(r.totalSec,2)} s</b></div>
+    <div class="kpi"><span>Temps en plages lourdes</span><b>${fmt(r.heavySec,2)} s</b></div>
+    <div class="kpi"><span>Dernier événement</span><b>${r.lastEv && Number.isFinite(r.lastEv.km) ? "≈ "+fmt(Math.round(r.lastEv.km))+" km" : "—"}</b></div>`;
+
+  const C = {none:["var(--bg)","var(--muted)"], ok:["var(--ok-soft)","var(--ok)"], warn:["var(--warn-soft)","var(--warn)"], crit:["var(--crit-soft)","var(--crit)"]};
+  $("tach").innerHTML = r.rows.map(x=>{
+    const [bg,fg] = C[x.a.cls];
+    const range = x.isLast ? "> "+fmt(x.from) : fmt(x.from)+"–"+fmt(x.to);
+    return `<div style="background:${bg};color:${fg}"><strong>P${x.i+1} · ${fmt(x.count)}</strong><span>${range}</span></div>`;
+  }).join("");
+
+  $("rowsOut").innerHTML = r.rows.map(x=>`<tr>
+    <td class="pl">${x.i+1}</td>
+    <td class="num">${x.isLast ? "> "+fmt(x.from) : fmt(x.from)+"–"+fmt(x.to)}</td>
+    <td class="num">${fmt(x.count)}</td>
+    <td class="num">${x.count>0 ? fmt(x.revs,2) : "—"}</td>
+    <td class="num">${x.count>0 ? (x.secs<0.01 ? "< 0,01 s" : fmt(x.secs,2)+" s") : "—"}</td>
+    <td class="num">${Number.isFinite(x.kmEv) ? fmt(Math.round(x.kmEv))+" km" : "—"}</td>
+    <td><span class="sev ${x.a.cls}">${x.a.txt}</span></td></tr>`).join("");
+
+  $("label").value = state.label || "";
+  $("immat").value = state.immat || "";
+  $("btnSave").textContent = state.id ? "Mettre à jour" : "Enregistrer";
+  $("btnSaveNew").hidden = !state.id;
+  renderList();
+}
+
+/* ---------- Relevés enregistrés ---------- */
+let pendingDelete = null;
+function renderList(){
+  $("count").textContent = records.length ? `${records.length} relevé${records.length>1?"s":""}` : "";
+  const box = $("list");
+  if(!records.length){ box.innerHTML = `<p class="empty">Aucun relevé enregistré. Saisis un libellé et une immatriculation ci-dessus puis enregistre : le relevé apparaîtra ici.</p>`; return; }
+  const sorted = [...records].sort((a,b)=> b.date.localeCompare(a.date));
+  box.innerHTML = sorted.map(rec=>{
+    const r = analyze(rec);
+    const d = new Date(rec.date).toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"});
+    const del = pendingDelete === rec.id;
+    return `<div class="rec${rec.id===state.id?" cur":""}">
+      <span class="dot ${r.worst}" title="${r.title}"></span>
+      <div class="meta"><b>${esc(rec.label || "Sans libellé")}</b>
+        <small>${rec.immat ? `<span class="plate">${esc(rec.immat)}</span> · ` : ""}${fmt(num(rec.km))} km · ${r.title} · ${d}</small></div>
+      <div class="acts">${del
+        ? `<button type="button" class="danger" data-act="confirm" data-id="${rec.id}">Confirmer la suppression</button><button type="button" data-act="cancel">Annuler</button>`
+        : `<button type="button" data-act="open" data-id="${rec.id}">Ouvrir</button><button type="button" data-act="edit" data-id="${rec.id}">Modifier</button><button type="button" class="danger" data-act="del" data-id="${rec.id}">Supprimer</button>`}
+      </div></div>`;
+  }).join("");
+}
+$("list").addEventListener("click",e=>{
+  const b = e.target.closest("button[data-act]"); if(!b) return;
+  const id = b.dataset.id, act = b.dataset.act;
+  if(act==="del"){ pendingDelete = id; renderList(); return; }
+  if(act==="cancel"){ pendingDelete = null; renderList(); return; }
+  if(act==="confirm"){
+    records = records.filter(r=>r.id!==id); writeLS(K_LIST, records);
+    if(state.id===id){ state.id = null; writeLS(K_DRAFT, state); }
+    pendingDelete = null; msg("Relevé supprimé."); renderOutput(); return;
+  }
+  const rec = records.find(r=>r.id===id); if(!rec) return;
+  state = clone(rec); delete state.date; writeLS(K_DRAFT, state);
+  renderInputs();
+  if(act==="edit"){ showTab("in"); } else { renderOutput(); window.scrollTo({top:0,behavior:"smooth"}); }
+});
+
+function normImmat(v){
+  const s = String(v).toUpperCase().replace(/[^A-Z0-9]/g,"");
+  const m = s.match(/^([A-Z]{2})(\d{3})([A-Z]{2})$/);
+  return m ? `${m[1]}-${m[2]}-${m[3]}` : String(v).toUpperCase().trim();
+}
+function msg(t, err){ const m=$("saveMsg"); m.textContent=t; m.className="msg"+(err?" err":""); clearTimeout(msg.t); msg.t=setTimeout(()=>{m.textContent="";},4000); }
+function save(asNew){
+  const label = $("label").value.trim(), immat = normImmat($("immat").value);
+  if(!label && !immat){ msg("Indique au moins un libellé ou une immatriculation.", true); $("label").focus(); return; }
+  state.label = label; state.immat = immat;
+  const now = new Date().toISOString();
+  const updating = !!state.id && !asNew;
+  if(updating){
+    const i = records.findIndex(r=>r.id===state.id);
+    if(i>=0) records[i] = {...clone(state), date: now}; else records.push({...clone(state), date: now});
+  } else {
+    state.id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random().toString(16).slice(2));
+    records.push({...clone(state), date: now});
+  }
+  if(!writeLS(K_LIST, records)){ msg("Enregistrement impossible : le stockage du navigateur est indisponible (navigation privée ?).", true); return; }
+  writeLS(K_DRAFT, state);
+  msg(updating ? "Relevé mis à jour." : "Relevé enregistré.");
+  renderOutput();
+}
+$("btnSave").addEventListener("click",()=>save(false));
+$("btnSaveNew").addEventListener("click",()=>save(true));
+$("immat").addEventListener("blur",e=>{ e.target.value = normImmat(e.target.value); });
+$("saveForm").addEventListener("submit",e=>{ e.preventDefault(); save(false); });
+["label","immat"].forEach(id=>$(id).addEventListener("input",e=>{ state[id] = e.target.value; writeLS(K_DRAFT, state); }));
+
+/* ---------- Onglets ---------- */
+function showTab(t){
+  const out = t==="out";
+  $("tab-in").setAttribute("aria-selected", String(!out));
+  $("tab-out").setAttribute("aria-selected", String(out));
+  $("view-in").hidden = out; $("view-out").hidden = !out;
+  if(out) renderOutput();
+  try{ sessionStorage.setItem("piwicheck-tab", t); }catch(e){}
+  window.scrollTo({top:0});
+}
+$("tab-in").addEventListener("click",()=>showTab("in"));
+$("tab-out").addEventListener("click",()=>showTab("out"));
+$("goOut").addEventListener("click",()=>showTab("out"));
+
+/* ---------- Saisie : événements ---------- */
 $("preset").addEventListener("change",e=>{
   state.preset = e.target.value;
   state.plages = PRESETS[state.preset].map(([a,b])=>({from:a,to:b,count:0,last:""}));
-  $("exTag").hidden = true; render(); save();
+  renderInputs(); writeLS(K_DRAFT, state);
 });
-$("cyl").addEventListener("change",e=>{ state.cyl = e.target.value; compute(); save(); });
-$("km").addEventListener("input",e=>{ state.km = e.target.value; $("exTag").hidden = true; compute(); save(); });
-$("hrs").addEventListener("input",e=>{ state.hrs = e.target.value; $("exTag").hidden = true; compute(); save(); });
-$("btnEx").addEventListener("click",()=>{ state = structuredClone(EXAMPLE); $("exTag").hidden = false; render(); save(); });
-$("btnClear").addEventListener("click",()=>{ state.plages.forEach(p=>{p.count=0;p.last="";}); $("exTag").hidden = true; render(); save(); });
+$("cyl").addEventListener("change",e=>{ state.cyl = e.target.value; changed(); });
+$("km").addEventListener("input",e=>{ state.km = e.target.value; changed(); });
+$("hrs").addEventListener("input",e=>{ state.hrs = e.target.value; changed(); });
+$("btnEx").addEventListener("click",()=>{ state = clone(EXAMPLE); renderInputs(); writeLS(K_DRAFT, state); });
+$("btnNew").addEventListener("click",()=>{
+  state = {id:null, label:"", immat:"", preset:state.preset, cyl:state.cyl, km:"", hrs:"",
+    plages: PRESETS[state.preset].map(([a,b])=>({from:a,to:b,count:0,last:""}))};
+  renderInputs(); writeLS(K_DRAFT, state); $("km").focus();
+});
 
-state = load();
-$("exTag").hidden = JSON.stringify(state) !== JSON.stringify(EXAMPLE);
-render();
-</script>
+/* ---------- Splash ---------- */
+(function(){
+  const sp = $("splash");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let done = false;
+  const close = ()=>{ if(done) return; done = true; sp.classList.add("out"); setTimeout(()=>sp.remove(), 600); };
+  sp.addEventListener("click", close);
+  document.addEventListener("keydown", close, {once:true});
+  setTimeout(close, reduce ? 1200 : 2900);
+})();
 
-<script>
+/* ---------- Démarrage ---------- */
+renderInputs();
+let startTab = "in"; try{ startTab = sessionStorage.getItem("piwicheck-tab") || "in"; }catch(e){}
+showTab(startTab);
+
 if("serviceWorker" in navigator) window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 </script>
 </body>
