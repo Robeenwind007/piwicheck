@@ -183,7 +183,7 @@ td.num{font-family:var(--mono);font-size:14px;white-space:nowrap}
     <div class="sp-sub">Lecture des surrégimes</div>
     <button type="button" class="sp-enter" id="spEnter">Entrer</button>
   </div>
-  <div class="sp-copy">© Olivier BERNARD 2026</div>
+  <div class="sp-copy">© Olivier BERNARD 2026 · <span id="appVer"></span></div>
 </div>
 
 <header class="top">
@@ -283,6 +283,7 @@ td.num{font-family:var(--mono);font-size:14px;white-space:nowrap}
 </main>
 
 <script>
+const APP_VERSION = "1.0.0";
 const PRESETS = {
   "6": [[7300,7499],[7500,7699],[7700,7899],[7900,8399],[8400,9499],[9500,9999]],
   "2": [[7300,7699],[7700,9999]]
@@ -538,11 +539,28 @@ $("btnNew").addEventListener("click",()=>{
 })();
 
 /* ---------- Démarrage ---------- */
+$("appVer").textContent = "v" + APP_VERSION;
 renderInputs();
 let startTab = "in"; try{ startTab = sessionStorage.getItem("piwicheck-tab") || "in"; }catch(e){}
 showTab(startTab);
 
-if("serviceWorker" in navigator) window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+/* ---------- Mises à jour ---------- */
+if("serviceWorker" in navigator){
+  // Recharge une seule fois quand une nouvelle version prend la main
+  let reloaded = false;
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener("controllerchange", ()=>{
+    if(!hadController || reloaded) return;
+    reloaded = true; location.reload();
+  });
+  window.addEventListener("load", ()=>{
+    navigator.serviceWorker.register("sw.js", {updateViaCache:"none"}).then(reg=>{
+      reg.update().catch(()=>{});
+      // Sur iPhone l'appli installée reste en veille : on vérifie à chaque retour au premier plan
+      document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible") reg.update().catch(()=>{}); });
+    }).catch(()=>{});
+  });
+}
 </script>
 </body>
 </html>
