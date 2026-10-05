@@ -116,10 +116,10 @@ td.num{font-family:var(--mono);font-size:14px;white-space:nowrap}
 .sev.ok{color:var(--ok);background:var(--ok-soft)}
 .sev.warn{color:var(--warn);background:var(--warn-soft)}
 .sev.crit{color:var(--crit);background:var(--crit-soft)}
-.tach{display:flex;height:46px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
-.tach div{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:var(--mono);font-size:11px;border-right:1px solid var(--surface);min-width:0;text-align:center}
-.tach div:last-child{border-right:0}
-.tach strong{font-family:var(--display);font-size:16px}
+.tach{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px}
+.tach div{display:grid;justify-items:center;gap:1px;padding:7px 2px 6px;border-radius:5px;min-width:0;border-bottom:3px solid currentColor}
+.tach span{font-family:var(--mono);font-size:11px;letter-spacing:.04em;opacity:.85}
+.tach strong{font-family:var(--display);font-size:22px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
 .bars{display:grid;gap:12px}
 .bar-row{display:grid;grid-template-columns:minmax(92px,auto) 1fr;gap:4px 14px;align-items:center}
 .bar-lab{display:grid;line-height:1.15}
@@ -180,7 +180,7 @@ td.num{font-family:var(--mono);font-size:14px;white-space:nowrap}
       <circle class="hub" cx="100" cy="100" r="7"/>
     </svg>
     <h1 class="sp-title">PIWI<span>check</span></h1>
-    <div class="sp-sub">Lecture des surrégimes</div>
+    <div class="sp-sub">Interprétation test PIWI</div>
     <button type="button" class="sp-enter" id="spEnter">Entrer</button>
   </div>
   <div class="sp-copy">© Olivier BERNARD 2026 · <span id="appVer"></span></div>
@@ -283,7 +283,7 @@ td.num{font-family:var(--mono);font-size:14px;white-space:nowrap}
 </main>
 
 <script>
-const APP_VERSION = "1.0.0";
+const APP_VERSION = "1.0.2";
 const PRESETS = {
   "6": [[7300,7499],[7500,7699],[7700,7899],[7900,8399],[8400,9499],[9500,9999]],
   "2": [[7300,7699],[7700,9999]]
@@ -405,7 +405,7 @@ function renderOutput(){
   $("tach").innerHTML = r.rows.map(x=>{
     const [bg,fg] = C[x.a.cls];
     const range = x.isLast ? "> "+fmt(x.from) : fmt(x.from)+"–"+fmt(x.to);
-    return `<div style="background:${bg};color:${fg}"><strong>P${x.i+1} · ${fmt(x.count)}</strong><span>${range}</span></div>`;
+    return `<div style="background:${bg};color:${fg}" title="Plage ${x.i+1} : ${range} tr/min, ${fmt(x.count)} allumages"><span>P${x.i+1}</span><strong>${fmt(x.count)}</strong></div>`;
   }).join("");
 
   const maxSec = Math.max(0, ...r.rows.map(x=>x.secs));
